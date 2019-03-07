@@ -467,7 +467,7 @@ public class DownloadManagerTest {
     private final FakeDownloader downloader;
 
     private FakeDownloadAction(Uri uri, boolean isRemoveAction) {
-      super("Fake", /* version= */ 0, uri, isRemoveAction, /* data= */ null);
+      super("Fake", /* version= */ 0, uri, isRemoveAction, /* data= */false, null);
       this.downloader = new FakeDownloader(isRemoveAction);
     }
 
@@ -479,6 +479,16 @@ public class DownloadManagerTest {
     @Override
     public Downloader createDownloader(DownloaderConstructorHelper downloaderConstructorHelper) {
       return downloader;
+    }
+
+    @Override
+    public DownloadAction pause() {
+      return null;
+    }
+
+    @Override
+    public DownloadAction resume() {
+      return null;
     }
 
     private FakeDownloader getFakeDownloader() {

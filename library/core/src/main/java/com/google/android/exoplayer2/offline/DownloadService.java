@@ -44,6 +44,8 @@ public abstract class DownloadService extends Service {
   /** Starts a download service, adding a new {@link DownloadAction} to be executed. */
   public static final String ACTION_ADD = "com.google.android.exoplayer.downloadService.action.ADD";
 
+  public static final String ACTION_RESUME = "com.google.android.exoplayer.downloadService.action.RESUME";
+
   /** Reloads the download requirements. */
   public static final String ACTION_RELOAD_REQUIREMENTS =
       "com.google.android.exoplayer.downloadService.action.RELOAD_REQUIREMENTS";
@@ -174,6 +176,16 @@ public abstract class DownloadService extends Service {
         .putExtra(KEY_FOREGROUND, foreground);
   }
 
+  public static Intent buildResumeActionIntent(
+          Context context,
+          Class<? extends DownloadService> clazz,
+          DownloadAction downloadAction,
+          boolean foreground) {
+    return getIntent(context, clazz, ACTION_RESUME)
+            .putExtra(KEY_DOWNLOAD_ACTION, downloadAction.toByteArray())
+            .putExtra(KEY_FOREGROUND, foreground);
+  }
+
   /**
    * Starts the service, adding an action to be executed.
    *
@@ -188,6 +200,19 @@ public abstract class DownloadService extends Service {
       DownloadAction downloadAction,
       boolean foreground) {
     Intent intent = buildAddActionIntent(context, clazz, downloadAction, foreground);
+    if (foreground) {
+      Util.startForegroundService(context, intent);
+    } else {
+      context.startService(intent);
+    }
+  }
+
+  public static void startWithResumeAction(
+          Context context,
+          Class<? extends DownloadService> clazz,
+          DownloadAction downloadAction,
+          boolean foreground) {
+    Intent intent = buildResumeActionIntent(context, clazz, downloadAction, foreground);
     if (foreground) {
       Util.startForegroundService(context, intent);
     } else {
@@ -238,10 +263,12 @@ public abstract class DownloadService extends Service {
     lastStartId = startId;
     taskRemoved = false;
     String intentAction = null;
+    byte[] actionData = null;
     if (intent != null) {
       intentAction = intent.getAction();
       startedInForeground |=
           intent.getBooleanExtra(KEY_FOREGROUND, false) || ACTION_RESTART.equals(intentAction);
+      actionData = intent.getByteArrayExtra(KEY_DOWNLOAD_ACTION);
     }
     // intentAction is null if the service is restarted or no action is specified.
     if (intentAction == null) {
@@ -254,7 +281,6 @@ public abstract class DownloadService extends Service {
         // Do nothing.
         break;
       case ACTION_ADD:
-        byte[] actionData = intent.getByteArrayExtra(KEY_DOWNLOAD_ACTION);
         if (actionData == null) {
           Log.e(TAG, "Ignoring ADD action with no action data");
         } else {
@@ -262,6 +288,17 @@ public abstract class DownloadService extends Service {
             downloadManager.handleAction(actionData);
           } catch (IOException e) {
             Log.e(TAG, "Failed to handle ADD action", e);
+          }
+        }
+        break;
+      case ACTION_RESUME:
+        if (actionData == null) {
+          Log.e(TAG, "Ignoring RESUME action with no action data");
+        } else {
+          try {
+            downloadManager.handleResumeAction(actionData);
+          } catch (IOException e) {
+            Log.e(TAG, "Failed to handle RESUME action", e);
           }
         }
         break;

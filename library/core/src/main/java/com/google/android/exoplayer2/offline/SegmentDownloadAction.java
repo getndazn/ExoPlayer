@@ -40,6 +40,7 @@ public abstract class SegmentDownloadAction extends DownloadAction {
         throws IOException {
       Uri uri = Uri.parse(input.readUTF());
       boolean isRemoveAction = input.readBoolean();
+      boolean isPaused = input.readBoolean();
       int dataLength = input.readInt();
       byte[] data = new byte[dataLength];
       input.readFully(data);
@@ -48,7 +49,7 @@ public abstract class SegmentDownloadAction extends DownloadAction {
       for (int i = 0; i < keyCount; i++) {
         keys.add(readKey(version, input));
       }
-      return createDownloadAction(uri, isRemoveAction, data, keys);
+      return createDownloadAction(uri, isRemoveAction, isPaused, data, keys);
     }
 
     /** Deserializes a key from the {@code input}. */
@@ -61,7 +62,7 @@ public abstract class SegmentDownloadAction extends DownloadAction {
 
     /** Returns a {@link DownloadAction}. */
     protected abstract DownloadAction createDownloadAction(
-        Uri manifestUri, boolean isRemoveAction, byte[] data, List<StreamKey> keys);
+        Uri manifestUri, boolean isRemoveAction, boolean isPaused, byte[] data, List<StreamKey> keys);
   }
 
   public final List<StreamKey> keys;
@@ -80,9 +81,10 @@ public abstract class SegmentDownloadAction extends DownloadAction {
       int version,
       Uri uri,
       boolean isRemoveAction,
+      boolean isPaused,
       @Nullable byte[] data,
       List<StreamKey> keys) {
-    super(type, version, uri, isRemoveAction, data);
+    super(type, version, uri, isRemoveAction, isPaused, data);
     if (isRemoveAction) {
       Assertions.checkArgument(keys.isEmpty());
       this.keys = Collections.emptyList();
@@ -102,6 +104,7 @@ public abstract class SegmentDownloadAction extends DownloadAction {
   public final void writeToStream(DataOutputStream output) throws IOException {
     output.writeUTF(uri.toString());
     output.writeBoolean(isRemoveAction);
+    output.writeBoolean(isPaused);
     output.writeInt(data.length);
     output.write(data);
     output.writeInt(keys.size());

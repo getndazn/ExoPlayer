@@ -36,11 +36,12 @@ public final class ProgressiveDownloadAction extends DownloadAction {
             throws IOException {
           Uri uri = Uri.parse(input.readUTF());
           boolean isRemoveAction = input.readBoolean();
+          boolean isPaused = input.readBoolean();
           int dataLength = input.readInt();
           byte[] data = new byte[dataLength];
           input.readFully(data);
           String customCacheKey = input.readBoolean() ? input.readUTF() : null;
-          return new ProgressiveDownloadAction(uri, isRemoveAction, data, customCacheKey);
+          return new ProgressiveDownloadAction(uri, isRemoveAction, isPaused, data, customCacheKey);
         }
       };
 
@@ -56,7 +57,7 @@ public final class ProgressiveDownloadAction extends DownloadAction {
    */
   public static ProgressiveDownloadAction createDownloadAction(
       Uri uri, @Nullable byte[] data, @Nullable String customCacheKey) {
-    return new ProgressiveDownloadAction(uri, /* isRemoveAction= */ false, data, customCacheKey);
+    return new ProgressiveDownloadAction(uri, /* isRemoveAction= */ false, false,data, customCacheKey);
   }
 
   /**
@@ -69,7 +70,7 @@ public final class ProgressiveDownloadAction extends DownloadAction {
    */
   public static ProgressiveDownloadAction createRemoveAction(
       Uri uri, @Nullable byte[] data, @Nullable String customCacheKey) {
-    return new ProgressiveDownloadAction(uri, /* isRemoveAction= */ true, data, customCacheKey);
+    return new ProgressiveDownloadAction(uri, /* isRemoveAction= */ true, false, data, customCacheKey);
   }
 
   /**
@@ -83,8 +84,8 @@ public final class ProgressiveDownloadAction extends DownloadAction {
    */
   @Deprecated
   public ProgressiveDownloadAction(
-      Uri uri, boolean isRemoveAction, @Nullable byte[] data, @Nullable String customCacheKey) {
-    super(TYPE, VERSION, uri, isRemoveAction, data);
+      Uri uri, boolean isRemoveAction, boolean isPaused, @Nullable byte[] data, @Nullable String customCacheKey) {
+    super(TYPE, VERSION, uri, isRemoveAction, isPaused, data);
     this.customCacheKey = customCacheKey;
   }
 
@@ -97,6 +98,7 @@ public final class ProgressiveDownloadAction extends DownloadAction {
   protected void writeToStream(DataOutputStream output) throws IOException {
     output.writeUTF(uri.toString());
     output.writeBoolean(isRemoveAction);
+    output.writeBoolean(isPaused);
     output.writeInt(data.length);
     output.write(data);
     boolean customCacheKeySet = customCacheKey != null;
@@ -135,4 +137,13 @@ public final class ProgressiveDownloadAction extends DownloadAction {
     return customCacheKey != null ? customCacheKey : CacheUtil.generateKey(uri);
   }
 
+  @Override
+  public DownloadAction pause() {
+    return new ProgressiveDownloadAction(uri, isRemoveAction, true, data, customCacheKey);
+  }
+
+  @Override
+  public DownloadAction resume() {
+    return new ProgressiveDownloadAction(uri, isRemoveAction, false, data, customCacheKey);
+  }
 }

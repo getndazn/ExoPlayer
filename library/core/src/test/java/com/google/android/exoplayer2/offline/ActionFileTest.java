@@ -246,7 +246,7 @@ public class ActionFileTest {
     public static final int VERSION = 0;
 
     private FakeDownloadAction(String type, byte[] data) {
-      super(type, VERSION, Uri.parse("http://test.com"), /* isRemoveAction= */ false, data);
+      super(type, VERSION, Uri.parse("http://test.com"), /* isRemoveAction= */ false, false, data);
     }
 
     @Override
@@ -260,6 +260,15 @@ public class ActionFileTest {
       return null;
     }
 
+    @Override
+    public DownloadAction pause() {
+      return null;
+    }
+
+    @Override
+    public DownloadAction resume() {
+      return null;
+    }
   }
 
 }

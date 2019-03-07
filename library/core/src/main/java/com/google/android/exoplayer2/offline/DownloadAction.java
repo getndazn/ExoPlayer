@@ -142,6 +142,7 @@ public abstract class DownloadAction {
   public final Uri uri;
   /** Whether this is a remove action. If false, this is a download action. */
   public final boolean isRemoveAction;
+  public final boolean isPaused;
   /** Custom data for this action. May be empty. */
   public final byte[] data;
 
@@ -153,11 +154,12 @@ public abstract class DownloadAction {
    * @param data Optional custom data for this action.
    */
   protected DownloadAction(
-      String type, int version, Uri uri, boolean isRemoveAction, @Nullable byte[] data) {
+      String type, int version, Uri uri, boolean isRemoveAction, boolean isPaused, @Nullable byte[] data) {
     this.type = type;
     this.version = version;
     this.uri = uri;
     this.isRemoveAction = isRemoveAction;
+    this.isPaused = isPaused;
     this.data = data != null ? data : Util.EMPTY_BYTE_ARRAY;
   }
 
@@ -201,6 +203,7 @@ public abstract class DownloadAction {
         && version == that.version
         && uri.equals(that.uri)
         && isRemoveAction == that.isRemoveAction
+        && isPaused == that.isPaused
         && Arrays.equals(data, that.data);
   }
 
@@ -208,9 +211,14 @@ public abstract class DownloadAction {
   public int hashCode() {
     int result = uri.hashCode();
     result = 31 * result + (isRemoveAction ? 1 : 0);
+    result = 31 * result + (isPaused ? 1 : 0);
     result = 31 * result + Arrays.hashCode(data);
     return result;
   }
+
+  public abstract DownloadAction pause();
+
+  public abstract DownloadAction resume();
 
   private static Deserializer getDeserializer(Class<?> clazz)
       throws NoSuchFieldException, IllegalAccessException {
