@@ -34,8 +34,8 @@ public final class DashDownloadAction extends SegmentDownloadAction {
       new SegmentDownloadActionDeserializer(TYPE, VERSION) {
         @Override
         protected DownloadAction createDownloadAction(
-            Uri uri, boolean isRemoveAction, byte[] data, List<StreamKey> keys) {
-          return new DashDownloadAction(uri, isRemoveAction, data, keys);
+            Uri uri, boolean isRemoveAction, boolean isPaused, byte[] data, List<StreamKey> keys) {
+          return new DashDownloadAction(uri, isRemoveAction, isPaused, data, keys);
         }
       };
 
@@ -48,7 +48,7 @@ public final class DashDownloadAction extends SegmentDownloadAction {
    */
   public static DashDownloadAction createDownloadAction(
       Uri uri, @Nullable byte[] data, List<StreamKey> keys) {
-    return new DashDownloadAction(uri, /* isRemoveAction= */ false, data, keys);
+    return new DashDownloadAction(uri, /* isRemoveAction= */ false, false, data, keys);
   }
 
   /**
@@ -58,7 +58,7 @@ public final class DashDownloadAction extends SegmentDownloadAction {
    * @param data Optional custom data for this action. If {@code null} an empty array will be used.
    */
   public static DashDownloadAction createRemoveAction(Uri uri, @Nullable byte[] data) {
-    return new DashDownloadAction(uri, /* isRemoveAction= */ true, data, Collections.emptyList());
+    return new DashDownloadAction(uri, /* isRemoveAction= */ true, false, data, Collections.emptyList());
   }
 
   /**
@@ -72,8 +72,8 @@ public final class DashDownloadAction extends SegmentDownloadAction {
    */
   @Deprecated
   public DashDownloadAction(
-      Uri uri, boolean isRemoveAction, @Nullable byte[] data, List<StreamKey> keys) {
-    super(TYPE, VERSION, uri, isRemoveAction, data, keys);
+      Uri uri, boolean isRemoveAction, boolean isPaused, @Nullable byte[] data, List<StreamKey> keys) {
+    super(TYPE, VERSION, uri, isRemoveAction, isPaused, data, keys);
   }
 
   @Override
@@ -81,4 +81,13 @@ public final class DashDownloadAction extends SegmentDownloadAction {
     return new DashDownloader(uri, keys, constructorHelper);
   }
 
+  @Override
+  public DownloadAction pause() {
+    return new DashDownloadAction(uri, isRemoveAction, true, data, keys);
+  }
+
+  @Override
+  public DownloadAction resume() {
+    return new DashDownloadAction(uri, isRemoveAction, false, data, keys);
+  }
 }

@@ -47,8 +47,8 @@ public final class SsDownloadAction extends SegmentDownloadAction {
 
         @Override
         protected DownloadAction createDownloadAction(
-            Uri uri, boolean isRemoveAction, byte[] data, List<StreamKey> keys) {
-          return new SsDownloadAction(uri, isRemoveAction, data, keys);
+            Uri uri, boolean isRemoveAction, boolean isPaused, byte[] data, List<StreamKey> keys) {
+          return new SsDownloadAction(uri, isRemoveAction, isPaused, data, keys);
         }
       };
 
@@ -61,7 +61,7 @@ public final class SsDownloadAction extends SegmentDownloadAction {
    */
   public static SsDownloadAction createDownloadAction(
       Uri uri, @Nullable byte[] data, List<StreamKey> keys) {
-    return new SsDownloadAction(uri, /* isRemoveAction= */ false, data, keys);
+    return new SsDownloadAction(uri, /* isRemoveAction= */ false, false, data, keys);
   }
 
   /**
@@ -71,7 +71,7 @@ public final class SsDownloadAction extends SegmentDownloadAction {
    * @param data Optional custom data for this action. If {@code null} an empty array will be used.
    */
   public static SsDownloadAction createRemoveAction(Uri uri, @Nullable byte[] data) {
-    return new SsDownloadAction(uri, /* isRemoveAction= */ true, data, Collections.emptyList());
+    return new SsDownloadAction(uri, /* isRemoveAction= */ true, false, data, Collections.emptyList());
   }
 
   /**
@@ -85,8 +85,8 @@ public final class SsDownloadAction extends SegmentDownloadAction {
    */
   @Deprecated
   public SsDownloadAction(
-      Uri uri, boolean isRemoveAction, @Nullable byte[] data, List<StreamKey> keys) {
-    super(TYPE, VERSION, uri, isRemoveAction, data, keys);
+      Uri uri, boolean isRemoveAction, boolean isPaused, @Nullable byte[] data, List<StreamKey> keys) {
+    super(TYPE, VERSION, uri, isRemoveAction, isPaused, data, keys);
   }
 
   @Override
@@ -94,4 +94,13 @@ public final class SsDownloadAction extends SegmentDownloadAction {
     return new SsDownloader(uri, keys, constructorHelper);
   }
 
+  @Override
+  public DownloadAction pause() {
+    return new SsDownloadAction(uri, isRemoveAction, true, data, keys);
+  }
+
+  @Override
+  public DownloadAction resume() {
+    return new SsDownloadAction(uri, isRemoveAction, false, data, keys);
+  }
 }
